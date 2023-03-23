@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 /// CLI for the execDAT execution environment.
 #[derive(Parser, Debug)]
-#[command(version, name = "execdat", author = "DAT Team")]
+#[command(version, name = "execd", author = "DAT Team")]
 #[command(about = "CLI for the execDAT execution environment.")]
 #[command(long_about = "CLI for the execDAT execution environment. \
         Wraps the kubectl command and requires the Kubernetes cluster to be correctly configured. \

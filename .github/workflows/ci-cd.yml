@@ -117,7 +117,7 @@ jobs:
           args: --release --target=${{ matrix.target }}
 
       - name: Rename
-        run: strip target/${{ matrix.target }}/release/$EXECUTABLE_NAME${{ matrix.extension }} && mv target/${{ matrix.target }}/release/$EXECUTABLE_NAME{{ matrix.extension }} target/release/$EXECUTABLE_NAME-${{ matrix.target }}{{ matrix.extension }}
+        run: strip target/${{ matrix.target }}/release/$EXECUTABLE_NAME${{ matrix.extension }} && mv target/${{ matrix.target }}/release/$EXECUTABLE_NAME${{ matrix.extension }} target/release/$EXECUTABLE_NAME-${{ matrix.target }}{{ matrix.extension }}
 
       - name: Release
         if: github.ref == 'refs/heads/main'

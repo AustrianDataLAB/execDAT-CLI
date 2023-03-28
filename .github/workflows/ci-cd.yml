@@ -120,10 +120,17 @@ jobs:
       - name: Rename
         run: strip target/${{ matrix.target }}/release/$EXECUTABLE_NAME${{ matrix.extension }} && mv target/${{ matrix.target }}/release/$EXECUTABLE_NAME${{ matrix.extension }} target/release/$EXECUTABLE_NAME-${{ matrix.target }}${{ matrix.extension }}
 
+      - name: Generate release tag
+        if: github.ref == 'refs/heads/main'
+        id: tag
+        run: |
+          echo "::set-output name=release_tag::UserBuild_$(date +"%Y.%m.%d_%H-%M")"
+
       - name: Release
         if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: ${{ steps.tag.outputs.release_tag }}
           files: |
             target/release/$EXECUTABLE_NAME-${{ matrix.target }}${{ matrix.extension }}
         env:

@@ -1,6 +1,10 @@
 name: CI/CD
 
-on: [push]
+on:
+  push:
+
+env:
+  EXECUTABLE_NAME: execd
 
 jobs:
   checks:
@@ -63,63 +67,17 @@ jobs:
 
   build:
     name: Build
+    if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     needs: checks
-    if: github.ref == 'refs/heads/dev'
     strategy:
       matrix:
         target:
           - x86_64-pc-windows-gnu
           - x86_64-unknown-linux-gnu
-
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v2
-
-      - name: Cargo Cache
-        uses: actions/cache@v1
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-${{ hashFiles('Cargo.toml') }}
-            ${{ runner.os }}-cargo
-
-      - name: Cargo Target Cache
-        uses: actions/cache@v1
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-target-${{ hashFiles('Cargo.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-target-${{ hashFiles('Cargo.toml') }}
-            ${{ runner.os }}-cargo-target
-      
-      - name: Install rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          target: ${{ matrix.target }}
-          override: true
-
-      - name: Build 
-        uses: actions-rs/cargo@v1
-        with:
-          use-cross: true
-          command: build
-          args: --release --target=${{ matrix.target }}
-
-  release:
-    name: Release
-    runs-on: ubuntu-latest
-    needs: checks
-    if: github.ref == 'refs/heads/main'
-    strategy:
-      matrix:
-        target:
-          - x86_64-pc-windows-gnu
-          - x86_64-unknown-linux-gnu
+        include:
+          - target: x86_64-pc-windows-gnu
+            extension: .exe
 
     steps:
       - name: Checkout sources
@@ -160,12 +118,13 @@ jobs:
           args: --release --target=${{ matrix.target }}
 
       - name: Rename
-        run: mv target/release/$EXECUTABLE_NAME target/release/$EXECUTABLE_NAME-${{ matrix.target }}
-      
+        run: strip target/${{ matrix.target }}/release/$EXECUTABLE_NAME${{ matrix.extension }} && mv target/${{ matrix.target }}/release/$EXECUTABLE_NAME${{ matrix.extension }} target/release/$EXECUTABLE_NAME-${{ matrix.target }}${{ matrix.extension }}
+
       - name: Release
+        if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            target/release/$EXECUTABLE_NAME-${{ matrix.target }}
+            target/release/$EXECUTABLE_NAME-${{ matrix.target }}${{ matrix.extension }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

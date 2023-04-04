@@ -3,9 +3,6 @@ name: CI/CD
 on:
   push:
 
-env:
-  EXECUTABLE_NAME: execd
-
 jobs:
   checks:
     name: Checks
@@ -68,16 +65,15 @@ jobs:
   build:
     name: Build
     if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
     needs: checks
     strategy:
+      fail-fast: false 
       matrix:
-        target:
-          - x86_64-pc-windows-gnu
-          - x86_64-unknown-linux-gnu
-        include:
-          - target: x86_64-pc-windows-gnu
-            extension: .exe
+        job:
+          - { target: x86_64-pc-windows-gnu, executable: windows.exe, os: windows-latest }
+          - { target: x86_64-unknown-linux-gnu, executable: amd64-linux, os: ubuntu-latest }
+
+    runs-on: ${{ matrix.job.os }}
 
     steps:
       - name: Checkout sources
@@ -89,37 +85,40 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.toml') }}
+          key: build-${{ runner.os }}-cargo-${{ hashFiles('Cargo.toml') }}
           restore-keys: |
-            ${{ runner.os }}-cargo-${{ hashFiles('Cargo.toml') }}
-            ${{ runner.os }}-cargo
+            build-${{ runner.os }}-cargo-${{ hashFiles('Cargo.toml') }}
+            build-${{ runner.os }}-cargo-target
 
       - name: Cargo Target Cache
         uses: actions/cache@v1
         with:
           path: target
-          key: ${{ runner.os }}-cargo-target-${{ hashFiles('Cargo.toml') }}
+          key: build-${{ runner.os }}-cargo-target-${{ hashFiles('Cargo.toml') }}
           restore-keys: |
-            ${{ runner.os }}-cargo-target-${{ hashFiles('Cargo.toml') }}
-            ${{ runner.os }}-cargo-target
+            build-${{ runner.os }}-cargo-target-${{ hashFiles('Cargo.toml') }}
+            build-${{ runner.os }}-cargo-target
       
       - name: Install rust toolchain
         uses: actions-rs/toolchain@v1
         with:
+          profile: minimal
           toolchain: stable
-          target: ${{ matrix.target }}
+          target: ${{ matrix.job.target }}
           override: true
 
       - name: Build 
         uses: actions-rs/cargo@v1
         with:
-          use-cross: true
+          # use-cross: true
           command: build
-          args: --release --target=${{ matrix.target }}
+          args: --release --target=${{ matrix.job.target }}
 
       - name: Rename
-        run: strip target/${{ matrix.target }}/release/$EXECUTABLE_NAME${{ matrix.extension }} && mv target/${{ matrix.target }}/release/$EXECUTABLE_NAME${{ matrix.extension }} target/release/$EXECUTABLE_NAME-${{ matrix.target }}${{ matrix.extension }}
-
+        run: |
+          rm target/${{ matrix.job.target }}/release/execd.d
+          cp target/${{ matrix.job.target }}/release/execd* execd-${{ matrix.job.executable }}
+        
       - name: Generate release tag
         if: github.ref == 'refs/heads/main'
         id: tag
@@ -132,6 +131,6 @@ jobs:
         with:
           tag_name: ${{ steps.tag.outputs.release_tag }}
           files: |
-            target/release/$EXECUTABLE_NAME-${{ matrix.target }}${{ matrix.extension }}
+            execd-${{ matrix.job.executable }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

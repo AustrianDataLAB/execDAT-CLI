@@ -15,22 +15,16 @@ jobs:
       - name: Cargo Cache
         uses: actions/cache@v1
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-${{ hashFiles('Cargo.toml') }}
-            ${{ runner.os }}-cargo
+          path: ~/.cargo
+          key: dev-${{ runner.os }}-cargo-${{ hashFiles('Cargo.toml') }}
+          restore-keys: dev-${{ runner.os }}-cargo-${{ hashFiles('Cargo.toml') }}
 
       - name: Cargo Target Cache
         uses: actions/cache@v1
         with:
           path: target
-          key: ${{ runner.os }}-cargo-target-${{ hashFiles('Cargo.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-target-${{ hashFiles('Cargo.toml') }}
-            ${{ runner.os }}-cargo-target
+          key: dev-${{ runner.os }}-cargo-target-${{ hashFiles('Cargo.toml') }}
+          restore-keys: dev-${{ runner.os }}-cargo-target-${{ hashFiles('Cargo.toml') }}
       
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
@@ -82,22 +76,16 @@ jobs:
       - name: Cargo Cache
         uses: actions/cache@v1
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
+          path: ~/.cargo
           key: build-${{ runner.os }}-cargo-${{ hashFiles('Cargo.toml') }}
-          restore-keys: |
-            build-${{ runner.os }}-cargo-${{ hashFiles('Cargo.toml') }}
-            build-${{ runner.os }}-cargo-target
+          restore-keys: build-${{ runner.os }}-cargo-${{ hashFiles('Cargo.toml') }}
 
       - name: Cargo Target Cache
         uses: actions/cache@v1
         with:
           path: target
           key: build-${{ runner.os }}-cargo-target-${{ hashFiles('Cargo.toml') }}
-          restore-keys: |
-            build-${{ runner.os }}-cargo-target-${{ hashFiles('Cargo.toml') }}
-            build-${{ runner.os }}-cargo-target
+          restore-keys: build-${{ runner.os }}-cargo-target-${{ hashFiles('Cargo.toml') }}
       
       - name: Install rust toolchain
         uses: actions-rs/toolchain@v1
@@ -110,7 +98,6 @@ jobs:
       - name: Build 
         uses: actions-rs/cargo@v1
         with:
-          # use-cross: true
           command: build
           args: --release --target=${{ matrix.job.target }}
 
@@ -123,7 +110,7 @@ jobs:
         if: github.ref == 'refs/heads/main'
         id: tag
         run: |
-          echo "::set-output name=release_tag::UserBuild_$(date +"%Y.%m.%d_%H-%M")"
+          echo "::set-output name=release_tag::UserBuild_$(date +"%Y-%m-%d_%H-%M"-%S)"
 
       - name: Release
         if: github.ref == 'refs/heads/main'

@@ -13,14 +13,14 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Cargo Cache
-        uses: actions/cache@v1
+        uses: actions/cache@v3
         with:
           path: ~/.cargo
           key: dev-${{ runner.os }}-cargo-${{ hashFiles('Cargo.toml') }}
           restore-keys: dev-${{ runner.os }}-cargo-${{ hashFiles('Cargo.toml') }}
 
       - name: Cargo Target Cache
-        uses: actions/cache@v1
+        uses: actions/cache@v3
         with:
           path: target
           key: dev-${{ runner.os }}-cargo-target-${{ hashFiles('Cargo.toml') }}
@@ -74,14 +74,14 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Cargo Cache
-        uses: actions/cache@v1
+        uses: actions/cache@v3
         with:
           path: ~/.cargo
           key: build-${{ runner.os }}-cargo-${{ hashFiles('Cargo.toml') }}
           restore-keys: build-${{ runner.os }}-cargo-${{ hashFiles('Cargo.toml') }}
 
       - name: Cargo Target Cache
-        uses: actions/cache@v1
+        uses: actions/cache@v3
         with:
           path: target
           key: build-${{ runner.os }}-cargo-target-${{ hashFiles('Cargo.toml') }}

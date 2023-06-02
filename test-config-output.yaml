@@ -1,0 +1,18 @@
+apiVersion: task.execd.at/v1alpha1
+kind: Build
+metadata:
+  name: build-sample
+spec:
+  baseimage: "python:latest"
+  description: "default image for demos"
+  sourcecode:
+    url: "https://github.com/AustrianDataLAB/execDAT"
+    branch: "main"
+    dependencies:
+      os:
+        - name: curl
+          version: latest
+      pip:
+        - name: pandas
+          version: latest
+    entrypoint: python

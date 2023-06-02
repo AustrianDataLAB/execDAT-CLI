@@ -19,7 +19,7 @@ pub struct Arguments {
 #[derive(Args, Debug)]
 pub struct RunCommandArgs {
     /// Name of or path to the request specification yaml.
-    input_file: PathBuf,
+    pub input_file: Option<PathBuf>,
 }
 
 /// Generates a template yaml file for the request specification.

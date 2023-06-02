@@ -1,54 +1,20 @@
+use tracing::log::info;
+
 use clap::Parser;
-use kube::{Client, api::{Api, ResourceExt, ListParams, PostParams}};
-use k8s_openapi::api::core::v1::Pod;
-use serde_json::json;
-use tracing::*;
+
+use kube::{Client, api::{Api, PatchParams, Patch}, CustomResourceExt, runtime::{wait::await_condition, conditions}};
+use k8s_openapi::apiextensions_apiserver::pkg::apis::apiextensions::v1::CustomResourceDefinition;
 
 mod cli;
-use cli::*;
-mod devfile_parser;
-use devfile_parser::parse_devfile;
+use cli::{Arguments, SubCommands};
+
+mod build_parser;
+use build_parser::parse_build;
+use crate::build_parser::Build;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = Client::try_default().await?;
-
-    let pods: Api<Pod> = Api::default_namespaced(client);
-
-    println!("before:");
-
-    for p in pods.list(&ListParams::default()).await? {
-        println!("found pod {}", p.name_any());
-    }
-
-    let p: Pod = serde_json::from_value(json!({
-        "apiVersion": "v1",
-        "kind": "Pod",
-        "metadata": { "name": "test" },
-        "spec": {
-            "containers": [{
-              "name": "blog",
-              "image": "alpine"
-            }],
-        }
-    }))?;
-
-    let pp = PostParams::default();
-    match pods.create(&pp, &p).await {
-        Ok(o) => {
-            let name = o.name_any();
-            assert_eq!(p.name_any(), name);
-            info!("Created {}", name);
-        }
-        Err(kube::Error::Api(ae)) => assert_eq!(ae.code, 409), // if you skipped delete, for instance
-        Err(e) => return Err(e.into()),                        // any other case is probably bad
-    }
-
-    println!("after:");
-
-    for p in pods.list(&ListParams::default()).await? {
-        println!("found pod {}", p.name_any());
-    }
 
     let args: Arguments = Arguments::parse();
 
@@ -57,7 +23,30 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             dbg!(run_args);
             if let Some(yaml_path) = &run_args.input_file {
                 if let Some(path_str) = yaml_path.to_str() {
-                    parse_devfile(path_str);
+                        let d: build_parser::BuildSpec = parse_build(path_str);
+
+                        let ssapply = PatchParams::apply("execdat-cli").force();
+
+                        // see https://github.com/kube-rs/kube/blob/main/examples/crd_apply.rs
+                        
+                        // 0. Ensure the CRD is installed (you probably just want to do this on CI)
+                        // (crd file can be created by piping `Foo::crd`'s yaml ser to kubectl apply)
+                        let crds: Api<CustomResourceDefinition> = Api::all(client.clone());
+                        info!("Creating crd: {}", serde_yaml::to_string(&Build::crd())?);
+                        crds.patch("builds.task.execd.at", &ssapply, &Patch::Apply(Build::crd()))
+                            .await?;
+
+                        info!("Waiting for the api-server to accept the CRD");
+                        let establish = await_condition(crds, "builds.task.execd.at", conditions::is_crd_established());
+                        let _ = tokio::time::timeout(std::time::Duration::from_secs(10), establish).await?;
+
+                        let builds: Api<Build> = Api::default_namespaced(client.clone());
+
+                        let b = Build::new("test", d);
+                        let o = builds.patch("test", &ssapply, &Patch::Apply(&b)).await?;
+
+                        dbg!(o);
+                        
                 } else {
                     println!("Invalid YAML file path");
                 }

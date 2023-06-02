@@ -1,9 +1,53 @@
 use clap::Parser;
+use kube::{Client, api::{Api, ResourceExt, ListParams, PostParams}};
+use k8s_openapi::api::core::v1::Pod;
+use serde_json::json;
+use tracing::*;
 
 mod cli;
 use cli::*;
 
-fn main() {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let client = Client::try_default().await?;
+
+    let pods: Api<Pod> = Api::default_namespaced(client);
+
+    println!("before:");
+
+    for p in pods.list(&ListParams::default()).await? {
+        println!("found pod {}", p.name_any());
+    }
+
+    let p: Pod = serde_json::from_value(json!({
+        "apiVersion": "v1",
+        "kind": "Pod",
+        "metadata": { "name": "test" },
+        "spec": {
+            "containers": [{
+              "name": "blog",
+              "image": "alpine"
+            }],
+        }
+    }))?;
+
+    let pp = PostParams::default();
+    match pods.create(&pp, &p).await {
+        Ok(o) => {
+            let name = o.name_any();
+            assert_eq!(p.name_any(), name);
+            info!("Created {}", name);
+        }
+        Err(kube::Error::Api(ae)) => assert_eq!(ae.code, 409), // if you skipped delete, for instance
+        Err(e) => return Err(e.into()),                        // any other case is probably bad
+    }
+
+    println!("after:");
+
+    for p in pods.list(&ListParams::default()).await? {
+        println!("found pod {}", p.name_any());
+    }
+
     let args: Arguments = Arguments::parse();
 
     match &args.subcommand {
@@ -20,4 +64,6 @@ fn main() {
             dbg!(list_args);
         }
     }
+
+    Ok(())
 }

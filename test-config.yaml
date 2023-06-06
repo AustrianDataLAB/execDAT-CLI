@@ -1,13 +1,23 @@
-baseimage: "python:latest"
-description: "default image for demos"
-sourcecode:
-  url: "https://github.com/AustrianDataLAB/execDAT"
-  branch: "main"
-  dependencies:
-    os:
+build:
+  baseimage: "python:latest"
+  description: "default image for demos"
+  sourcecode:
+    url: "https://github.com/AustrianDataLAB/execDAT"
+    branch: "main"
+    dependencies:
+      os:
       - name: curl
         version: latest
-    pip:
+      pip:
       - name: pandas
         version: latest
-  entrypoint: python
+    entrypoint: python
+description: "default run"
+inputdata:
+  datapath: "/data"
+  transformcmd: "echo 'transform'"
+  type: "https"
+  url: "https://github.com/AustrianDataLAB/execDAT"
+outputdata:
+  datapath: "/data/output"
+  url: "https://github.com/AustrianDataLAB/execDAT"

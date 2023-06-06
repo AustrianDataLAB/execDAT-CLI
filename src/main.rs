@@ -12,9 +12,9 @@ use kube::{
 mod cli;
 use cli::{Arguments, SubCommands};
 
-mod build_parser;
-use crate::build_parser::Build;
-use build_parser::parse_build;
+mod run_parser;
+use crate::run_parser::Run;
+use run_parser::parse_run;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -27,7 +27,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             dbg!(run_args);
             if let Some(yaml_path) = &run_args.input_file {
                 if let Some(path_str) = yaml_path.to_str() {
-                    let d: build_parser::BuildSpec = parse_build(path_str);
+                    let d: run_parser::RunSpec = parse_run(path_str);
 
                     let ssapply = PatchParams::apply("execdat-cli").force();
 
@@ -36,27 +36,27 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     // 0. Ensure the CRD is installed (you probably just want to do this on CI)
                     // (crd file can be created by piping `Foo::crd`'s yaml ser to kubectl apply)
                     let crds: Api<CustomResourceDefinition> = Api::all(client.clone());
-                    info!("Creating crd: {}", serde_yaml::to_string(&Build::crd())?);
+                    info!("Creating crd: {}", serde_yaml::to_string(&Run::crd())?);
                     crds.patch(
-                        "builds.task.execd.at",
+                        "runs.task.execd.at",
                         &ssapply,
-                        &Patch::Apply(Build::crd()),
+                        &Patch::Apply(Run::crd()),
                     )
                     .await?;
 
                     info!("Waiting for the api-server to accept the CRD");
                     let establish = await_condition(
                         crds,
-                        "builds.task.execd.at",
+                        "runs.task.execd.at",
                         conditions::is_crd_established(),
                     );
                     let _ =
                         tokio::time::timeout(std::time::Duration::from_secs(10), establish).await?;
 
-                    let builds: Api<Build> = Api::default_namespaced(client.clone());
+                    let runs: Api<Run> = Api::default_namespaced(client.clone());
 
-                    let b = Build::new("test", d);
-                    let o = builds.patch("test", &ssapply, &Patch::Apply(&b)).await?;
+                    let b = Run::new("test", d);
+                    let o = runs.patch("test", &ssapply, &Patch::Apply(&b)).await?;
 
                     dbg!(o);
                 } else {

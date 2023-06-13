@@ -1,13 +1,12 @@
-use tracing::log::info;
-
 use clap::Parser;
 
 use k8s_openapi::apiextensions_apiserver::pkg::apis::apiextensions::v1::CustomResourceDefinition;
 use kube::{
     api::{Api, Patch, PatchParams},
     runtime::{conditions, wait::await_condition},
-    Client, CustomResourceExt,
+    Client,
 };
+use rand::{distributions::Alphanumeric, Rng};
 
 mod cli;
 use cli::{Arguments, SubCommands};
@@ -23,51 +22,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     match &args.subcommand {
         SubCommands::Run(run_args) => {
-            dbg!(run_args);
-
-            if let Some(yaml_path) = &run_args.input_file {
-                if let Some(path_str) = yaml_path.to_str() {
-                    let run_spec: run_parser::RunSpec = parse_run(path_str);
-                    let patch_params = PatchParams::apply("execdat-cli").force();
-
-                    // see https://github.com/kube-rs/kube/blob/main/examples/crd_apply.rs
-
-                    // 0. Ensure the CRD is installed (you probably just want to do this on CI)
-                    // (crd file can be created by piping `Foo::crd`'s yaml ser to kubectl apply)
-                    // is this needed?
-                    let crd_api: Api<CustomResourceDefinition> = Api::all(client.clone());
-                    info!("Creating crd: {}", serde_yaml::to_string(&Run::crd())?);
-                    crd_api
-                        .patch(
-                            "runs.task.execd.at",
-                            &patch_params,
-                            &Patch::Apply(Run::crd()),
-                        )
-                        .await?;
-
-                    info!("Waiting for the api-server to accept the CRD");
-                    let establish = await_condition(
-                        crd_api,
-                        "runs.task.execd.at",
-                        conditions::is_crd_established(),
-                    );
-                    let _ =
-                        tokio::time::timeout(std::time::Duration::from_secs(10), establish).await?;
-
-                    let runs: Api<Run> = Api::default_namespaced(client.clone());
-
-                    let run = Run::new("test", run_spec);
-                    let run_response = runs
-                        .patch("test", &patch_params, &Patch::Apply(&run))
-                        .await?;
-
-                    dbg!(run_response);
-                } else {
-                    println!("Invalid YAML file path");
-                }
-            } else {
-                println!("YAML file path is missing");
-            }
+            handle_run(run_args, &client).await?;
         }
         SubCommands::Template(template_args) => {
             dbg!(template_args);
@@ -80,5 +35,69 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
+    Ok(())
+}
+
+async fn handle_run(
+    run_args: &cli::RunCommandArgs,
+    client: &Client,
+) -> Result<(), Box<dyn std::error::Error>> {
+    if let Some(yaml_path) = &run_args.input_file {
+        if let Some(path_str) = yaml_path.to_str() {
+            print!("Parsing YAML file at {}... ", path_str);
+            let run_spec: run_parser::RunSpec = parse_run(path_str);
+            println!("Success!");
+
+            let patch_params = PatchParams::apply("execdat-cli").force();
+
+            // see https://github.com/kube-rs/kube/blob/main/examples/crd_apply.rs
+
+            // 0. Ensure the CRD is installed (you probably just want to do this on CI)
+            // (crd file can be created by piping `Foo::crd`'s yaml ser to kubectl apply)
+            // is this needed?
+
+            // // info!("Creating crd: {}", serde_yaml::to_string(&Run::crd())?);
+            // crd_api
+            //     .patch(
+            //         "runs.task.execd.at",
+            //         &patch_params,
+            //         &Patch::Apply(Run::crd()),
+            //     )
+            //     .await?;
+
+            // info!("Waiting for the api-server to accept the CRD");
+            print!("Connecting to cluster and checking for required CRD definition... ");
+            let crd_api: Api<CustomResourceDefinition> = Api::all(client.clone());
+            let establish = await_condition(
+                crd_api,
+                "runs.task.execd.at",
+                conditions::is_crd_established(),
+            );
+            let _ = tokio::time::timeout(std::time::Duration::from_secs(10), establish).await;
+            println!("Success!");
+
+            let run_api: Api<Run> = Api::default_namespaced(client.clone());
+            let run_id: String = rand::thread_rng()
+                .sample_iter(&Alphanumeric)
+                .take(8)
+                .map(char::from)
+                .collect();
+            let run_name: String = format!("run-{}", run_id.to_ascii_lowercase());
+            let run = Run::new(run_name.as_str(), run_spec);
+
+            print!("Applying run... ");
+            let _run_response = run_api
+                .patch(run_name.as_str(), &patch_params, &Patch::Apply(&run))
+                .await?;
+            println!("Success!");
+
+            println!("\nThe ID of you run is '{}'. You can get its status by running the 'execd status <REQUEST_ID>' command.", run_id);
+            println!("See 'execd status --help' for more information.");
+        } else {
+            println!("Invalid YAML file path!");
+        }
+    } else {
+        println!("YAML file path is missing!");
+    }
     Ok(())
 }

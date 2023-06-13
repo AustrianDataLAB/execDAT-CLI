@@ -19,34 +19,34 @@ use run_parser::parse_run;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = Client::try_default().await?;
-
     let args: Arguments = Arguments::parse();
 
     match &args.subcommand {
         SubCommands::Run(run_args) => {
             dbg!(run_args);
+
             if let Some(yaml_path) = &run_args.input_file {
                 if let Some(path_str) = yaml_path.to_str() {
-                    let d: run_parser::RunSpec = parse_run(path_str);
-
-                    let ssapply = PatchParams::apply("execdat-cli").force();
+                    let run_spec: run_parser::RunSpec = parse_run(path_str);
+                    let patch_params = PatchParams::apply("execdat-cli").force();
 
                     // see https://github.com/kube-rs/kube/blob/main/examples/crd_apply.rs
 
                     // 0. Ensure the CRD is installed (you probably just want to do this on CI)
                     // (crd file can be created by piping `Foo::crd`'s yaml ser to kubectl apply)
-                    let crds: Api<CustomResourceDefinition> = Api::all(client.clone());
+                    let crd_api: Api<CustomResourceDefinition> = Api::all(client.clone());
                     info!("Creating crd: {}", serde_yaml::to_string(&Run::crd())?);
-                    crds.patch(
-                        "runs.task.execd.at",
-                        &ssapply,
-                        &Patch::Apply(Run::crd()),
-                    )
-                    .await?;
+                    crd_api
+                        .patch(
+                            "runs.task.execd.at",
+                            &patch_params,
+                            &Patch::Apply(Run::crd()),
+                        )
+                        .await?;
 
                     info!("Waiting for the api-server to accept the CRD");
                     let establish = await_condition(
-                        crds,
+                        crd_api,
                         "runs.task.execd.at",
                         conditions::is_crd_established(),
                     );
@@ -55,10 +55,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                     let runs: Api<Run> = Api::default_namespaced(client.clone());
 
-                    let b = Run::new("test", d);
-                    let o = runs.patch("test", &ssapply, &Patch::Apply(&b)).await?;
+                    let run = Run::new("test", run_spec);
+                    let run_response = runs
+                        .patch("test", &patch_params, &Patch::Apply(&run))
+                        .await?;
 
-                    dbg!(o);
+                    dbg!(run_response);
                 } else {
                     println!("Invalid YAML file path");
                 }

@@ -39,7 +39,6 @@ pub struct Dependency {
     version: String,
 }
 
-
 #[derive(CustomResource, Clone, Debug, Deserialize, Serialize, JsonSchema)]
 #[kube(
     group = "task.execd.at",
@@ -77,8 +76,7 @@ pub fn parse_run(file_path: &str) -> RunSpec {
         .expect("Failed to read file");
 
     // Parse the YAML contents into the run spec structure
-    let run_spec: RunSpec =
-        serde_yaml::from_str(&file_contents).expect("Failed to parse devfile");
+    let run_spec: RunSpec = serde_yaml::from_str(&file_contents).expect("Failed to parse devfile");
 
     run_spec
 }

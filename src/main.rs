@@ -34,6 +34,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                     // 0. Ensure the CRD is installed (you probably just want to do this on CI)
                     // (crd file can be created by piping `Foo::crd`'s yaml ser to kubectl apply)
+                    // is this needed?
                     let crd_api: Api<CustomResourceDefinition> = Api::all(client.clone());
                     info!("Creating crd: {}", serde_yaml::to_string(&Run::crd())?);
                     crd_api

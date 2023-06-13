@@ -28,11 +28,11 @@ pub struct TemplateCommandArgs {
     /// Name of or path to the output file.
     /// Existing files will not be overwritten, except when the --force flag is set.
     #[arg(short = 'o', long = "output", default_value = "specs-template.yaml")]
-    output_file: PathBuf,
+    pub output_file: PathBuf,
 
     /// If set to true, an existing file is overwritten in case of a name confict.
     #[arg(short = 'f', long = "force")]
-    force_overwrite: bool,
+    pub force_overwrite: bool,
 }
 
 /// Shows the status of a specific request.

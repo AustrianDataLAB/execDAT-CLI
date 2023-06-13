@@ -9,12 +9,13 @@ use kube::{
     Client, CustomResourceExt,
 };
 
-mod cli;
-use cli::{Arguments, SubCommands};
+use execd::Arguments;
+use execd::SubCommands;
 
 mod run_parser;
 use crate::run_parser::Run;
 use run_parser::parse_run;
+use std::fs;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -69,7 +70,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
         SubCommands::Template(template_args) => {
-            dbg!(template_args);
+            let output_file = &template_args.output_file;
+            let force_overwrite = template_args.force_overwrite;
+            
+            // Check if the output file already exists and handle the overwrite flag
+            if output_file.exists() && !force_overwrite {
+                println!("Output file already exists. Use --force to overwrite.");
+            } else {
+                // Copy the template file to the output path
+                let template_file = "src/config/template-config-original.yaml";
+                match fs::copy(template_file, output_file) {
+                    Ok(_) => println!("Template file copied to: {:?}", output_file),
+                    Err(err) => eprintln!("Failed to copy template file: {}", err),
+                }
+            }                      
         }
         SubCommands::Status(status_args) => {
             dbg!(status_args);

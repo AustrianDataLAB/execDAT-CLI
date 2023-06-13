@@ -72,7 +72,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         SubCommands::Template(template_args) => {
             let output_file = &template_args.output_file;
             let force_overwrite = template_args.force_overwrite;
-            
+
             // Check if the output file already exists and handle the overwrite flag
             if output_file.exists() && !force_overwrite {
                 println!("Output file already exists. Use --force to overwrite.");
@@ -83,7 +83,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     Ok(_) => println!("Template file copied to: {:?}", output_file),
                     Err(err) => eprintln!("Failed to copy template file: {}", err),
                 }
-            }                      
+            }
         }
         SubCommands::Status(status_args) => {
             dbg!(status_args);

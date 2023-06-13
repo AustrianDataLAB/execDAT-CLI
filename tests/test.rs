@@ -1,8 +1,8 @@
 #[cfg(test)]
 mod tests {
-    use std::path::PathBuf;
-    use std::fs;
     use execd::TemplateCommandArgs;
+    use std::fs;
+    use std::path::PathBuf;
 
     #[test]
     fn test_output_file_exists() {
@@ -10,12 +10,12 @@ mod tests {
             output_file: PathBuf::from("existing_output.yaml"),
             force_overwrite: false,
         };
-        
+
         fs::write("existing_output.yaml", "Existing content").unwrap();
-        
+
         let output_file = &template_args.output_file;
         let force_overwrite = template_args.force_overwrite;
-        
+
         // Check if the output file already exists and handle the overwrite flag
         if output_file.exists() && !force_overwrite {
             println!("Output file already exists. Use --force to overwrite.");
@@ -37,10 +37,10 @@ mod tests {
             output_file: PathBuf::from("new_output.yaml"),
             force_overwrite: true,
         };
-        
+
         let output_file = &template_args.output_file;
         let force_overwrite = template_args.force_overwrite;
-        
+
         // Check if the output file already exists and handle the overwrite flag
         if output_file.exists() && !force_overwrite {
             println!("Output file already exists. Use --force to overwrite.");

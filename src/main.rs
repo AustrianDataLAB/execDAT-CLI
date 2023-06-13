@@ -26,20 +26,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             handle_run(run_args, &client).await?;
         }
         SubCommands::Template(template_args) => {
-            let output_file = &template_args.output_file;
-            let force_overwrite = template_args.force_overwrite;
-
-            // Check if the output file already exists and handle the overwrite flag
-            if output_file.exists() && !force_overwrite {
-                println!("Output file already exists. Use --force to overwrite.");
-            } else {
-                // Copy the template file to the output path
-                let template_file = "src/config/template-config-original.yaml";
-                match fs::copy(template_file, output_file) {
-                    Ok(_) => println!("Template file copied to: {:?}", output_file),
-                    Err(err) => eprintln!("Failed to copy template file: {}", err),
-                }
-            }
+            handle_template(template_args).await?;
         }
         SubCommands::Status(status_args) => {
             dbg!(status_args);
@@ -53,7 +40,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 async fn handle_run(
-    run_args: &cli::RunCommandArgs,
+    run_args: &execd::RunCommandArgs,
     client: &Client,
 ) -> Result<(), Box<dyn std::error::Error>> {
     if let Some(yaml_path) = &run_args.input_file {
@@ -112,6 +99,26 @@ async fn handle_run(
         }
     } else {
         println!("YAML file path is missing!");
+    }
+    Ok(())
+}
+
+async fn handle_template(
+    template_args: &execd::TemplateCommandArgs,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let output_file = &template_args.output_file;
+    let force_overwrite = template_args.force_overwrite;
+
+    // Check if the output file already exists and handle the overwrite flag
+    if output_file.exists() && !force_overwrite {
+        println!("Output file already exists. Use --force to overwrite.");
+    } else {
+        // Copy the template file to the output path
+        let template_file = "src/config/template-config-original.yaml";
+        match fs::copy(template_file, output_file) {
+            Ok(_) => println!("Template file copied to: {:?}", output_file),
+            Err(err) => eprintln!("Failed to copy template file: {}", err),
+        }
     }
     Ok(())
 }

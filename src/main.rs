@@ -2,11 +2,10 @@ use clap::Parser;
 
 use k8s_openapi::apiextensions_apiserver::pkg::apis::apiextensions::v1::CustomResourceDefinition;
 use kube::{
-    api::{Api, Patch, PatchParams},
+    api::{Api, PostParams},
     runtime::{conditions, wait::await_condition},
     Client,
 };
-use rand::{distributions::Alphanumeric, Rng};
 
 use execd::Arguments;
 use execd::SubCommands;
@@ -45,28 +44,13 @@ async fn handle_run(
 ) -> Result<(), Box<dyn std::error::Error>> {
     if let Some(yaml_path) = &run_args.input_file {
         if let Some(path_str) = yaml_path.to_str() {
-            print!("Parsing YAML file at {}... ", path_str);
-            let run_spec: run_parser::RunSpec = parse_run(path_str);
-            println!("Success!");
-
-            let patch_params = PatchParams::apply("execdat-cli").force();
 
             // see https://github.com/kube-rs/kube/blob/main/examples/crd_apply.rs
 
-            // 0. Ensure the CRD is installed (you probably just want to do this on CI)
-            // (crd file can be created by piping `Foo::crd`'s yaml ser to kubectl apply)
-            // is this needed?
-
-            // // info!("Creating crd: {}", serde_yaml::to_string(&Run::crd())?);
-            // crd_api
-            //     .patch(
-            //         "runs.task.execd.at",
-            //         &patch_params,
-            //         &Patch::Apply(Run::crd()),
-            //     )
-            //     .await?;
-
-            // info!("Waiting for the api-server to accept the CRD");
+            print!("Parsing YAML file at {}... ", path_str);
+            let run_spec: run_parser::RunSpec = parse_run(path_str);
+            println!("Success!");
+            
             print!("Connecting to cluster and checking for required CRD definition... ");
             let crd_api: Api<CustomResourceDefinition> = Api::all(client.clone());
             let establish = await_condition(
@@ -77,22 +61,21 @@ async fn handle_run(
             let _ = tokio::time::timeout(std::time::Duration::from_secs(10), establish).await;
             println!("Success!");
 
-            let run_api: Api<Run> = Api::default_namespaced(client.clone());
-            let run_id: String = rand::thread_rng()
-                .sample_iter(&Alphanumeric)
-                .take(8)
-                .map(char::from)
-                .collect();
-            let run_name: String = format!("run-{}", run_id.to_ascii_lowercase());
-            let run = Run::new(run_name.as_str(), run_spec);
+            // generate a run from the spec and replace the metadata to let the server generate a unique name for us
+            let mut run = Run::new("", run_spec);
+            run.metadata.name = None;
+            run.metadata.generate_name = Some("run-".to_string());
+
+            let run_api: Api<Run> = Api::namespaced(client.clone(), "execdev");
+            let post_params: PostParams = PostParams::default();
 
             print!("Applying run... ");
-            let _run_response = run_api
-                .patch(run_name.as_str(), &patch_params, &Patch::Apply(&run))
+            let run_response = run_api
+                .create( &post_params, &run)
                 .await?;
             println!("Success!");
 
-            println!("\nThe ID of you run is '{}'. You can get its status by running the 'execd status <REQUEST_ID>' command.", run_id);
+            println!("\nThe ID of you run is '{}'. You can get its status by running the 'execd status <REQUEST_ID>' command.", run_response.metadata.name.unwrap());
             println!("See 'execd status --help' for more information.");
         } else {
             println!("Invalid YAML file path!");

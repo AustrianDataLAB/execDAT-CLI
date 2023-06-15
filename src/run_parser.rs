@@ -54,6 +54,11 @@ pub struct RunSpec {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
+pub struct RunMetadata {
+    generate_name: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct OutputDataSpec {
     // Define your output data fields here
     // ...

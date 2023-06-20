@@ -19,7 +19,7 @@ pub struct Arguments {
 #[derive(Args, Debug)]
 pub struct RunCommandArgs {
     /// Name of or path to the request specification yaml.
-    pub input_file: Option<PathBuf>,
+    pub input_file: PathBuf,
 }
 
 /// Generates a template yaml file for the request specification.
@@ -39,7 +39,7 @@ pub struct TemplateCommandArgs {
 #[derive(Args, Debug)]
 pub struct StatusCommandArgs {
     /// String identifying the request.
-    pub request_id: String,
+    pub request_name: String,
 }
 
 /// List all currently ongoing requests.

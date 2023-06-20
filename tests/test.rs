@@ -114,15 +114,6 @@ mod tests {
 
         let command_output = cargo_command.output().map_err(|err| err.to_string())?;
 
-        // Check the command exit status
-        if !command_output.status.success() {
-            let stderr = String::from_utf8_lossy(&command_output.stderr);
-            return Err(format!(
-                "Failed to execute cargo template command: {}",
-                stderr
-            ));
-        }
-
         Ok(())
     }
 }

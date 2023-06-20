@@ -65,31 +65,28 @@ async fn handle_run(
     run_args: &RunCommandArgs,
     run_api: Api<Run>,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    if let Some(yaml_path) = &run_args.input_file {
-        if let Some(path_str) = yaml_path.to_str() {
-            print!("Parsing YAML file at {}... ", path_str);
-            let run_spec: parser::RunSpec = parse_run(path_str);
-            println!("Success!");
+    if let Some(path_str) = &run_args.input_file.to_str() {
+        // Parse the YAML file
+        let run_spec: parser::RunSpec = parse_run(path_str);
 
-            // generate a run from the spec and replace the metadata to let the server generate a unique name for us
-            let mut run = Run::new("", run_spec);
-            run.metadata.name = None;
-            run.metadata.generate_name = Some("run-".to_string());
+        // Generate a run from the spec and replace the metadata to let the server generate a unique name for us
+        let mut run = Run::new("", run_spec);
+        run.metadata.name = None;
+        run.metadata.generate_name = Some("run-".to_string());
 
-            let post_params: PostParams = PostParams::default();
+        // Create the run
+        let post_params: PostParams = PostParams::default();
+        let run_response = run_api.create(&post_params, &run).await?;
 
-            print!("Applying run... ");
-            let run_response = run_api.create(&post_params, &run).await?;
-            println!("Success!");
-            
-            println!("\nThe ID of you run is '{}'. You can get its status by running the 'execd status <REQUEST_ID>' command.", run_response.metadata.name.unwrap());
-            println!("See 'execd status --help' for more information.");
-        } else {
-            println!("Invalid YAML file path!");
-        }
+        println!("Successfully created run from YAML file at {}!", path_str);
+        println!("The name of you run is '{}' and you can find it in the namespace '{}'. You can get its status by running the 'execd status <REQUEST_NAME>' command.", 
+                run_response.metadata.name.unwrap(),
+                run_response.metadata.namespace.unwrap());
+        println!("See 'execd status --help' for more information.");
     } else {
-        println!("YAML file path is missing!");
+        println!("Invalid YAML file path!");
     }
+    
     Ok(())
 }
 
@@ -119,8 +116,8 @@ async fn handle_status(
     run_api: Api<Run>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     // Get the run with the given request ID
-    let run = run_api.get(status_args.request_id.as_str()).await?;
-    dbg!(run);
+    let run = run_api.get(status_args.request_name.as_str()).await?;
+    dbg!(run.spec);
 
     Ok(())
 }

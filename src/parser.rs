@@ -14,29 +14,39 @@ use kube::CustomResource;
     namespaced
 )]
 pub struct BuildSpec {
-    baseimage: String,
-    description: String,
-    sourcecode: SourceCode,
+    pub baseimage: String,
+    pub description: Option<String>,
+    pub sourcecode: SourceCode,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct SourceCode {
-    url: String,
-    branch: String,
-    dependencies: Dependencies,
-    entrypoint: String,
+    pub branch: Option<String>,
+    pub buildcmd: Option<String>,
+    pub commit: Option<String>,
+    pub dependencies: Option<Dependencies>,
+    pub depencencycmd: Option<String>,
+    pub entrypoint: String,
+    pub url: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct Dependencies {
-    os: Vec<Dependency>,
-    pip: Vec<Dependency>,
+    pub asdf: Option<Vec<Dependency>>,
+    pub cargo: Option<Vec<Dependency>>,
+    pub go: Option<Vec<Dependency>>,
+    pub gradle: Option<Vec<Dependency>>,
+    pub maven: Option<Vec<Dependency>>,
+    pub npm: Option<Vec<Dependency>>,
+    pub os: Option<Vec<Dependency>>,
+    pub pip: Option<Vec<Dependency>>,
+    pub yarn: Option<Vec<Dependency>>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct Dependency {
-    name: String,
-    version: String,
+    pub name: String,
+    pub version: String,
 }
 
 #[derive(CustomResource, Clone, Debug, Deserialize, Serialize, JsonSchema)]
@@ -47,27 +57,26 @@ pub struct Dependency {
     namespaced
 )]
 pub struct RunSpec {
-    build: BuildSpec,
-    outputdata: OutputDataSpec,
-    inputdata: Option<InputDataSpec>,
+    pub build: BuildSpec,
+    pub outputdata: OutputDataSpec,
+    pub inputdata: Option<InputDataSpec>,
     pub description: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
-pub struct RunMetadata {
-    generate_name: Option<String>,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct OutputDataSpec {
-    // Define your output data fields here
-    // ...
+    pub datapath: String,
+    pub url: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct InputDataSpec {
-    // Define your input data fields here
-    // ...
+    pub datapath: String,
+    pub transformcmd: Option<String>,
+    pub url: String,
+
+    #[serde(rename = "type")]
+    pub input_data_type: String,
 }
 
 pub fn parse_run(file_path: &str) -> RunSpec {
@@ -81,7 +90,7 @@ pub fn parse_run(file_path: &str) -> RunSpec {
         .expect("Failed to read file");
 
     // Parse the YAML contents into the run spec structure
-    let run_spec: RunSpec = serde_yaml::from_str(&file_contents).expect("Failed to parse devfile");
+    let run_spec: RunSpec = serde_yaml::from_str(&file_contents).expect("Failed to parse YAML file");
 
     run_spec
 }

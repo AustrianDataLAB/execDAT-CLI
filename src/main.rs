@@ -133,7 +133,7 @@ async fn handle_list(
     let runs = run_api.list(&list_params).await?;
 
     // Check number of items in the returned ObjectList
-    if runs.items.len() <= 0 {
+    if runs.items.is_empty() {
         println!("No runs found.");
     } else {
         // Constants for print formatting

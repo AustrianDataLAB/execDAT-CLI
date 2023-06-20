@@ -1,13 +1,12 @@
 #[cfg(test)]
 mod tests {
-    use std::fs;
-    use std::process::Command;
-    use std::path::{Path, PathBuf};
     use execd::cli::CONFIG_YAML;
+    use std::fs;
+    use std::path::{Path, PathBuf};
+    use std::process::Command;
 
     #[test]
     fn test_basic_template_command_generates_default_output() {
-
         let force_overwrite = false;
         // Define the output file path
         let default_output_file = PathBuf::from("specs-template.yaml");
@@ -46,7 +45,10 @@ mod tests {
         fs::write(&empty_output_file, "Existing content").unwrap();
         let result = execute_template_command(&empty_output_file, force_overwrite);
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err().to_string(), "Output file already exists. Use --force to overwrite.");
+        assert_eq!(
+            result.unwrap_err().to_string(),
+            "Output file already exists. Use --force to overwrite."
+        );
 
         // Remove the existing output file if it exists
         if empty_output_file.exists() {
@@ -81,10 +83,15 @@ mod tests {
         }
     }
 
-    fn execute_template_command(empty_output_file: &Path, force_overwrite: bool) -> Result<(), String> {
+    fn execute_template_command(
+        empty_output_file: &Path,
+        force_overwrite: bool,
+    ) -> Result<(), String> {
         // Check if the output file already exists and handle the overwrite flag
         if empty_output_file.exists() && !force_overwrite {
-            return Err(String::from("Output file already exists. Use --force to overwrite."));
+            return Err(String::from(
+                "Output file already exists. Use --force to overwrite.",
+            ));
         }
 
         // Execute the cargo template command
@@ -107,7 +114,10 @@ mod tests {
         // Check the command exit status
         if !command_output.status.success() {
             let stderr = String::from_utf8_lossy(&command_output.stderr);
-            return Err(format!("Failed to execute cargo template command: {}", stderr));
+            return Err(format!(
+                "Failed to execute cargo template command: {}",
+                stderr
+            ));
         }
 
         Ok(())

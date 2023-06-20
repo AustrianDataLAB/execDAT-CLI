@@ -112,8 +112,6 @@ mod tests {
             cargo_command.arg("--force");
         }
 
-        let command_output = cargo_command.output().map_err(|err| err.to_string())?;
-
         Ok(())
     }
 }

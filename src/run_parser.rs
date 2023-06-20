@@ -50,7 +50,7 @@ pub struct RunSpec {
     build: BuildSpec,
     outputdata: OutputDataSpec,
     inputdata: Option<InputDataSpec>,
-    description: Option<String>,
+    pub description: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]

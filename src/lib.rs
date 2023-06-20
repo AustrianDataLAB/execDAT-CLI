@@ -39,7 +39,7 @@ pub struct TemplateCommandArgs {
 #[derive(Args, Debug)]
 pub struct StatusCommandArgs {
     /// String identifying the request.
-    request_id: String,
+    pub request_id: String,
 }
 
 /// List all currently ongoing requests.

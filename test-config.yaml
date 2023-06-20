@@ -12,7 +12,7 @@ build:
       - name: pandas
         version: latest
     entrypoint: python
-description: "default run"
+description: "default run with a lot of characterzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
 inputdata:
   datapath: "/data"
   transformcmd: "echo 'transform'"

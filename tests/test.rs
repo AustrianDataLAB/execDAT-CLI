@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use execd::TemplateCommandArgs;
+    use execd::cli::TemplateCommandArgs;
     use std::fs;
     use std::path::PathBuf;
 

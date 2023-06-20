@@ -18,6 +18,7 @@ mod tests {
         }
 
         let result = execute_template_command(&empty_output_file, force_overwrite);
+        dbg!(&result);
         assert!(result.is_ok());
 
         // Check if the file is copied
@@ -44,6 +45,7 @@ mod tests {
         // Create the existing output file
         fs::write(&empty_output_file, "Existing content").unwrap();
         let result = execute_template_command(&empty_output_file, force_overwrite);
+        dbg!(&result);
         assert!(result.is_err());
         assert_eq!(
             result.unwrap_err().to_string(),
@@ -70,6 +72,7 @@ mod tests {
         fs::write(&empty_output_file, "Existing content").unwrap();
 
         let result = execute_template_command(&empty_output_file, force_overwrite);
+        dbg!(&result);
         assert!(result.is_ok());
 
         // Check if the file is copied

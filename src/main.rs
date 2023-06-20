@@ -130,7 +130,7 @@ async fn handle_status(
     let run_api: Api<Run> = Api::namespaced(client.clone(), namespace);
 
     let run = run_api.get(status_args.request_id.as_str()).await?;
-    
+
     dbg!(run);
 
     Ok(())
@@ -167,15 +167,23 @@ async fn handle_list(
         const CREATED_PRINT_WIDTH: usize = 25;
         const DESCRIPTION_PRINT_WIDTH: usize = 40;
 
-        println!("{:<NAME_PRINT_WIDTH$} {:<CREATED_PRINT_WIDTH$} {:<DESCRIPTION_PRINT_WIDTH$}", "NAME", "CREATED", "DESCRIPTION");
+        println!(
+            "{:<NAME_PRINT_WIDTH$} {:<CREATED_PRINT_WIDTH$} {:<DESCRIPTION_PRINT_WIDTH$}",
+            "NAME", "CREATED", "DESCRIPTION"
+        );
         runs.items.iter().for_each(|run| {
-
             // the format macro hack is used to guarantee consistent spacing because some types don't convert using just the println macro
             println!(
                 "{:<NAME_PRINT_WIDTH$} {:<CREATED_PRINT_WIDTH$} {:<DESCRIPTION_PRINT_WIDTH$}",
                 run.metadata.name.as_ref().unwrap(),
                 format!("{}", run.metadata.creation_timestamp.as_ref().unwrap().0),
-                run.spec.description.as_ref().unwrap().chars().take(DESCRIPTION_PRINT_WIDTH).collect::<String>(),
+                run.spec
+                    .description
+                    .as_ref()
+                    .unwrap()
+                    .chars()
+                    .take(DESCRIPTION_PRINT_WIDTH)
+                    .collect::<String>(),
             );
         });
     }

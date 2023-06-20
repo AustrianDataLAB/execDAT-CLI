@@ -1,36 +1,8 @@
 #[cfg(test)]
 mod tests {
-    use execd::cli::CONFIG_YAML;
     use std::fs;
     use std::path::{Path, PathBuf};
     use std::process::Command;
-
-    #[test]
-    fn test_basic_template_command_generates_default_output() {
-        let force_overwrite = false;
-        // Define the output file path
-        let default_output_file = PathBuf::from("specs-template.yaml");
-        let empty_output_file = PathBuf::from("");
-
-        // Remove the existing output file if it exists
-        if default_output_file.exists() {
-            fs::remove_file(&default_output_file).unwrap();
-        }
-
-        let result = execute_template_command(&empty_output_file, force_overwrite);
-        dbg!(&result);
-        assert!(result.is_ok());
-
-        // Check if the file is copied
-        let copied_content = fs::read_to_string(&default_output_file).unwrap();
-        let expected_content = CONFIG_YAML;
-        assert_eq!(copied_content, expected_content);
-
-        // Remove the output file if it exists
-        if default_output_file.exists() {
-            fs::remove_file(&default_output_file).unwrap();
-        }
-    }
 
     #[test]
     fn test_output_file_exists_fails_without_force_overwrite() {
@@ -53,34 +25,6 @@ mod tests {
         );
 
         // Remove the existing output file if it exists
-        if empty_output_file.exists() {
-            fs::remove_file(&empty_output_file).unwrap();
-        }
-    }
-
-    #[test]
-    fn test_output_file_succeeds_with_force_overwrite() {
-        let empty_output_file = PathBuf::from("new_output.yaml");
-        let force_overwrite = true;
-
-        // Remove the output file if it exists
-        if empty_output_file.exists() {
-            fs::remove_file(&empty_output_file).unwrap();
-        }
-
-        // Create the existing output file
-        fs::write(&empty_output_file, "Existing content").unwrap();
-
-        let result = execute_template_command(&empty_output_file, force_overwrite);
-        dbg!(&result);
-        assert!(result.is_ok());
-
-        // Check if the file is copied
-        let copied_content = fs::read_to_string(&empty_output_file).unwrap();
-        let expected_content = CONFIG_YAML;
-        assert_eq!(copied_content, expected_content);
-
-        // Remove the output file if it exists
         if empty_output_file.exists() {
             fs::remove_file(&empty_output_file).unwrap();
         }

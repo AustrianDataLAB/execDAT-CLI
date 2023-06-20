@@ -16,6 +16,8 @@ use parser::*;
 use std::env;
 use std::fs;
 
+//use crate::cli::CONFIG_YAML;
+
 static DEFAULT_EXECD_NAMESPACE: &str = "execdev";
 
 #[tokio::main]
@@ -104,8 +106,8 @@ async fn handle_template(
         println!("Output file already exists. Use --force to overwrite.");
     } else {
         // Copy the template file to the output path
-        let template_file = "src/config/template-config-original.yaml";
-        match fs::copy(template_file, output_file) {
+        let template_content = crate::cli::CONFIG_YAML;
+        match fs::write(output_file, template_content) {
             Ok(_) => println!("Template file copied to: {:?}", output_file),
             Err(err) => eprintln!("Failed to copy template file: {}", err),
         }

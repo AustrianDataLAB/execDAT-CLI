@@ -19,7 +19,7 @@ pub struct Arguments {
 #[derive(Args, Debug)]
 pub struct RunCommandArgs {
     /// Name of or path to the request specification yaml.
-    input_file: PathBuf,
+    pub input_file: PathBuf,
 }
 
 /// Generates a template yaml file for the request specification.
@@ -28,18 +28,18 @@ pub struct TemplateCommandArgs {
     /// Name of or path to the output file.
     /// Existing files will not be overwritten, except when the --force flag is set.
     #[arg(short = 'o', long = "output", default_value = "specs-template.yaml")]
-    output_file: PathBuf,
+    pub output_file: PathBuf,
 
     /// If set to true, an existing file is overwritten in case of a name confict.
     #[arg(short = 'f', long = "force")]
-    force_overwrite: bool,
+    pub force_overwrite: bool,
 }
 
 /// Shows the status of a specific request.
 #[derive(Args, Debug)]
 pub struct StatusCommandArgs {
     /// String identifying the request.
-    request_id: String,
+    pub request_name: String,
 }
 
 /// List all currently ongoing requests.
@@ -54,3 +54,27 @@ pub enum SubCommands {
     Status(StatusCommandArgs),
     List(ListCommandArgs),
 }
+
+pub static CONFIG_YAML: &str = r#"build:
+  baseimage: "python:latest"
+  description: "default image for demos"
+  sourcecode:
+    url: "https://github.com/AustrianDataLAB/execDAT"
+    branch: "main"
+    dependencies:
+      os:
+      - name: curl
+        version: latest
+      pip:
+      - name: pandas
+        version: latest
+    entrypoint: python
+description: "default run"
+inputdata:
+  datapath: "/data"
+  transformcmd: "echo 'transform'"
+  type: "https"
+  url: "https://github.com/AustrianDataLAB/execDAT"
+outputdata:
+  datapath: "/data/output"
+  url: "https://github.com/AustrianDataLAB/execDAT""#;

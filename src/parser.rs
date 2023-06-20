@@ -14,19 +14,29 @@ use kube::CustomResource;
     namespaced
 )]
 pub struct BuildSpec {
-    pub baseimage: String,
+    #[serde(rename = "baseimage")]
+    pub base_image: String,
+    #[serde(rename = "description")]
     pub description: Option<String>,
-    pub sourcecode: SourceCode,
+    #[serde(rename = "sourcecode")]
+    pub source_code: SourceCode,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct SourceCode {
+    #[serde(rename = "branch")]
     pub branch: Option<String>,
-    pub buildcmd: Option<String>,
+    #[serde(rename = "buildcmd")]
+    pub build_command: Option<String>,
+    #[serde(rename = "commit")]
     pub commit: Option<String>,
+    #[serde(rename = "dependencies")]
     pub dependencies: Option<Dependencies>,
-    pub depencencycmd: Option<String>,
+    #[serde(rename = "depencencycmd")]
+    pub depencency_command: Option<String>,
+    #[serde(rename = "entrypoint")]
     pub entrypoint: String,
+    #[serde(rename = "url")]
     pub url: String,
 }
 
@@ -45,7 +55,9 @@ pub struct Dependencies {
 
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct Dependency {
+    #[serde(rename = "name")]
     pub name: String,
+    #[serde(rename = "version")]
     pub version: String,
 }
 
@@ -54,29 +66,44 @@ pub struct Dependency {
     group = "task.execd.at",
     version = "v1alpha1",
     kind = "Run",
+    status = "RunStatus",
     namespaced
 )]
 pub struct RunSpec {
+    #[serde(rename = "build")]
     pub build: BuildSpec,
-    pub outputdata: OutputDataSpec,
-    pub inputdata: Option<InputDataSpec>,
+    #[serde(rename = "outputdata")]
+    pub output_data: OutputDataSpec,
+    #[serde(rename = "inputdata")]
+    pub input_data: Option<InputDataSpec>,
+    #[serde(rename = "description")]
     pub description: Option<String>,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug, Default, JsonSchema)]
+pub struct RunStatus {
+    #[serde(rename = "currentPhase")]
+    pub current_phase: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct OutputDataSpec {
-    pub datapath: String,
+    #[serde(rename = "datapath")]
+    pub data_path: String,
+    #[serde(rename = "url")]
     pub url: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 pub struct InputDataSpec {
+    #[serde(rename = "datapath")]
     pub datapath: String,
-    pub transformcmd: Option<String>,
+    #[serde(rename = "transformcmd")]
+    pub transform_command: Option<String>,
+    #[serde(rename = "url")]
     pub url: String,
-
     #[serde(rename = "type")]
-    pub input_data_type: String,
+    pub data_type: String,
 }
 
 pub fn parse_run(file_path: &str) -> RunSpec {

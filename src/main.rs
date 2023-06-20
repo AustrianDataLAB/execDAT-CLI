@@ -86,7 +86,7 @@ async fn handle_run(
     } else {
         println!("Invalid YAML file path!");
     }
-    
+
     Ok(())
 }
 
@@ -118,6 +118,7 @@ async fn handle_status(
     // Get the run with the given request ID
     let run = run_api.get(status_args.request_name.as_str()).await?;
     dbg!(run.spec);
+    dbg!(run.status);
 
     Ok(())
 }

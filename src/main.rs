@@ -154,19 +154,26 @@ async fn handle_list(
             let print_creation_timestamp =
                 format!("{}", run.metadata.creation_timestamp.as_ref().unwrap().0);
 
-            let print_description = run
-                .spec
-                .description
-                .as_ref()
-                .unwrap()
-                .chars()
-                .take(DESCRIPTION_PRINT_WIDTH)
-                .collect::<String>();
+            match run.spec.description.as_ref() {
+                Some(description) => {
+                    let print_description = description
+                        .chars()
+                        .take(DESCRIPTION_PRINT_WIDTH)
+                        .collect::<String>();
 
-            println!(
-                "{:<NAME_PRINT_WIDTH$} {:<CREATED_PRINT_WIDTH$} {:<DESCRIPTION_PRINT_WIDTH$}",
-                print_name, print_creation_timestamp, print_description
-            );
+                    println!(
+                        "{:<NAME_PRINT_WIDTH$} {:<CREATED_PRINT_WIDTH$} {:<DESCRIPTION_PRINT_WIDTH$}",
+                        print_name, print_creation_timestamp, print_description
+                    );
+
+                },
+                None => {
+                    println!(
+                        "{:<NAME_PRINT_WIDTH$} {:<CREATED_PRINT_WIDTH$} {:<DESCRIPTION_PRINT_WIDTH$}",
+                        print_name, print_creation_timestamp, ""
+                    );
+                }
+            };
         });
     }
 

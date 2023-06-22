@@ -91,7 +91,7 @@ pub struct OutputDataSpec {
     #[serde(rename = "datapath")]
     pub data_path: String,
     #[serde(rename = "url")]
-    pub url: String,
+    pub url: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]

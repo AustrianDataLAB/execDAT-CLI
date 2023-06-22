@@ -13,7 +13,6 @@ use cli::*;
 mod parser;
 use parser::*;
 
-use std::env;
 use std::fs;
 
 use crate::cli::CONFIG_YAML;

@@ -18,8 +18,6 @@ use std::fs;
 
 use crate::cli::CONFIG_YAML;
 
-static DEFAULT_EXECD_NAMESPACE: &str = "execdev";
-
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // see https://github.com/kube-rs/kube/blob/main/examples/crd_apply.rs
@@ -36,12 +34,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
     let _ = tokio::time::timeout(std::time::Duration::from_secs(10), establish).await;
 
-    // Getting namespace from environment variable
-    let namespace = env::var("EXECD_NAMESPACE").unwrap_or(DEFAULT_EXECD_NAMESPACE.to_string());
-    let namespace = namespace.as_str();
-
     // Creating the run API
-    let run_api: Api<Run> = Api::namespaced(client.clone(), namespace);
+    let run_api: Api<Run> = Api::default_namespaced(client.clone());
 
     // Argument Parsing
     let args: Arguments = Arguments::parse();

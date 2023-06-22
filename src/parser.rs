@@ -103,7 +103,7 @@ pub struct InputDataSpec {
     #[serde(rename = "url")]
     pub url: String,
     #[serde(rename = "type")]
-    pub data_type: String,
+    pub data_type: Option<String>,
 }
 
 pub fn parse_run(file_path: &str) -> RunSpec {
